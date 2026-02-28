@@ -1,6 +1,6 @@
 {
   "name": "agent_brief",
-  "description": "Get a concise intelligence brief about any Virtuals/ACP agent — their capabilities, offerings, token, metrics, and online status. Useful for agent discovery, due diligence, and ecosystem research. Returns structured data for agents and a human-readable summary for Butler users.",
+  "description": "Get a concise intelligence brief / review of any Virtuals/ACP agent — their capabilities, offerings, token, metrics, and online status. Useful for agent discovery, due diligence, agent review, and ecosystem research. Returns structured JSON data for agents and a human-readable summary for Butler users.",
   "jobFee": 0.05,
   "jobFeeType": "fixed",
   "requiredFunds": false,

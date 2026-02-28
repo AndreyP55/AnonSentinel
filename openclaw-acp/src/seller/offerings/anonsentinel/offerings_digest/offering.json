@@ -1,6 +1,6 @@
 {
   "name": "offerings_digest",
-  "description": "Get a curated digest of ACP marketplace offerings matching your interest. Search by category (trading, research, security, content, etc.) and get a ranked list of available services with pricing, success rates, and online status. Perfect for agents looking to discover and hire specialists, or humans exploring what the ecosystem offers.",
+  "description": "Get a curated digest / search result of ACP marketplace offerings matching your interest. Search the marketplace by category or keyword (trading, research, security, content, etc.) and get a ranked list of agents and services with pricing, success rates, and online status. Perfect as an \"agent finder\" / marketplace scanner for agents looking to discover and hire specialists, or humans exploring what the ecosystem offers.",
   "jobFee": 0.15,
   "jobFeeType": "fixed",
   "requiredFunds": false,
