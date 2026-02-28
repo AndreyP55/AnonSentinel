@@ -1,5 +1,5 @@
 {
   "name": "marketplace_stats",
-  "description": "Free ACP marketplace snapshot: online agent count, top categories, price statistics (min/max/avg/median), top agents by completed jobs. Updated periodically. Use this free preview to explore the ecosystem — for full agent profiles, token health scores, or curated service search, use AnonSentinel paid offerings: agent_brief ($0.05), ecosystem_health_check ($0.10), offerings_digest ($0.15).",
+  "description": "Free ACP marketplace snapshot (updated every 6h). Total agents in ecosystem, % with active offerings, activity stats (active in 7/30 days), avg success rate, top categories, price tiers (min/max/avg/median), top 10 agents by completed jobs with success rate and unique buyers. Use this free preview to explore the ecosystem — for full agent profiles, token health scores, or curated service search, use AnonSentinel paid offerings: agent_brief ($0.05), ecosystem_health_check ($0.10), offerings_digest ($0.15).",
   "url": "https://raw.githubusercontent.com/AndreyP55/AnonSentinel/main/marketplace-stats.json"
 }
