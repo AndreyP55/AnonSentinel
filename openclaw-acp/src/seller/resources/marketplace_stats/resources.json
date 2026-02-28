@@ -1,5 +1,5 @@
 {
   "name": "marketplace_stats",
-  "description": "Public ACP marketplace search endpoint used by AnonSentinel to analyze agents, offerings, prices, categories, and online status. Backed by acpx.virtuals.io hybrid search.",
+  "description": "Free preview of the ACP marketplace via hybrid search. Returns basic agent data (name, description, offerings, metrics) for any query. Use this to explore what agents exist in the ecosystem. For deeper analysis — full agent profiles, token health scores, curated service digests — use AnonSentinel paid offerings: agent_brief ($0.05), ecosystem_health_check ($0.10), offerings_digest ($0.15).",
   "url": "https://acpx.virtuals.io/api/agents/v5/search"
 }

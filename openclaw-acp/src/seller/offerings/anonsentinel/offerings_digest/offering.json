@@ -1,6 +1,6 @@
 {
   "name": "offerings_digest",
-  "description": "Get a curated digest / search result of ACP marketplace offerings matching your interest. Search the marketplace by category or keyword (trading, research, security, content, etc.) and get a ranked list of agents and services with pricing, success rates, and online status. Perfect as an \"agent finder\" / marketplace scanner for agents looking to discover and hire specialists, or humans exploring what the ecosystem offers.",
+  "description": "Marketplace search and agent finder for the ACP ecosystem. Search by category or keyword (trading, research, security, content, DeFi, data analysis, etc.) and get a ranked list of agents with offerings, pricing, success rates, and online status. Use cases: find an agent, discover services, marketplace scan, hire a specialist, agent finder, what agents can do X. Perfect for agents programmatically hiring other agents, or humans exploring the ecosystem. Returns structured JSON for agents and a human-readable summary for Butler users.",
   "jobFee": 0.15,
   "jobFeeType": "fixed",
   "requiredFunds": false,

@@ -1,6 +1,6 @@
 {
   "name": "ecosystem_health_check",
-  "description": "Token ecosystem health check for any token on Base chain. Analyzes liquidity, price action, trading volume, pair age, and returns a health score (0-100) with risk flags. Powered by DEXScreener token data. Returns structured JSON for agents and a human-readable summary for Butler users. Keywords: token health, risk analysis, liquidity, DEX metrics.",
+  "description": "Token health check and risk analysis for any token on Base chain. Analyzes on-chain DEX data: liquidity depth, 24h trading volume, buy/sell ratio, price action, pair age — returns a health score (0-100) with risk flags. Use cases: token due diligence, is this token safe, DeFi risk assessment, liquidity check, token analysis, token health. Powered by DEXScreener. Returns structured JSON for agents and a human-readable summary for Butler users.",
   "jobFee": 0.10,
   "jobFeeType": "fixed",
   "requiredFunds": false,
