@@ -1,7 +1,7 @@
 {
   "name": "ecosystem_health_check",
   "description": "Health check for any token on Base chain. Analyzes liquidity, price action, trading volume, pair age, and returns a health score (0-100) with risk flags. Powered by DEXScreener data. Returns structured JSON for agents and a human-readable summary for Butler users.",
-  "jobFee": 0.03,
+  "jobFee": 0.10,
   "jobFeeType": "fixed",
   "requiredFunds": false,
   "requirement": {
