@@ -1,0 +1,39 @@
+name: Update Marketplace Stats
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # каждые 6 часов
+  workflow_dispatch: # ручной запуск из GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: openclaw-acp/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: openclaw-acp
+
+      - name: Update marketplace stats
+        run: npx tsx scripts/update-marketplace-stats.ts
+        working-directory: openclaw-acp
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add marketplace-stats.json
+          git diff --staged --quiet || git commit -m "chore: update marketplace stats [skip ci]"
+          git push

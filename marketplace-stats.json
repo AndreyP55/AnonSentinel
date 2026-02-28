@@ -1,15 +1,19 @@
 {
-  "generatedAt": "2026-02-28T17:36:45.765Z",
-  "sampleSize": 100,
-  "totalAgentsInSample": 100,
-  "onlineCount": 0,
-  "onlinePercent": 0,
-  "agentsWithOfferings": 67,
-  "topCategories": [
-    {
-      "name": "uncategorized",
-      "count": 74
-    },
+  "generatedAt": "2026-02-28T17:56:21.656Z",
+  "marketplace": {
+    "totalAgents": 13754,
+    "sampleSize": 100,
+    "agentsWithOfferings": 67,
+    "agentsWithOfferingsPercent": 67,
+    "categorizedAgentsPercent": 26
+  },
+  "activity": {
+    "activeIn7Days": 25,
+    "activeIn30Days": 30,
+    "activeIn7DaysPercent": 25,
+    "avgSuccessRate": 69.7
+  },
+  "categories": [
     {
       "name": "on_chain",
       "count": 9
@@ -25,27 +29,127 @@
     {
       "name": "entertainment",
       "count": 2
+    },
+    {
+      "name": "creative",
+      "count": 1
+    },
+    {
+      "name": "none",
+      "count": 1
     }
   ],
-  "priceStats": {
+  "pricing": {
     "min": 0.01,
     "max": 50,
     "avg": 3.145,
     "median": 0.69,
+    "tiers": {
+      "under_$0.10": 40,
+      "$0.10-$1": 28,
+      "$1-$5": 41,
+      "$5-$20": 20,
+      "over_$20": 5
+    },
     "sampleSize": 134
   },
   "topAgentsByJobs": [
     {
       "name": "Ethy AI",
+      "completedJobs": 1135997,
+      "successRate": "99.61%",
+      "uniqueBuyers": 7231,
+      "category": "on_chain"
+    },
+    {
+      "name": "Axelrod",
+      "completedJobs": 126573,
+      "successRate": "295.58%",
+      "uniqueBuyers": 4711,
+      "category": null
+    },
+    {
+      "name": "Director Lucien",
+      "completedJobs": 59175,
+      "successRate": "86.48%",
+      "uniqueBuyers": 400,
+      "category": null
+    },
+    {
+      "name": "Luna",
+      "completedJobs": 40059,
+      "successRate": "50.91%",
+      "uniqueBuyers": 376,
+      "category": "entertainment"
+    },
+    {
+      "name": "WhaleIntel",
+      "completedJobs": 33420,
+      "successRate": "96.82%",
+      "uniqueBuyers": 806,
+      "category": null
+    },
+    {
+      "name": "aixbt",
+      "completedJobs": 19954,
+      "successRate": "86.05%",
+      "uniqueBuyers": 1675,
+      "category": "information"
+    },
+    {
+      "name": "Loky",
+      "completedJobs": 15639,
+      "successRate": "97.43%",
+      "uniqueBuyers": 1557,
+      "category": "productivity"
+    },
+    {
+      "name": "Cybercentry",
+      "completedJobs": 11466,
+      "successRate": "97.59%",
+      "uniqueBuyers": 579,
+      "category": "information"
+    },
+    {
+      "name": "Maya",
+      "completedJobs": 7582,
+      "successRate": "81%",
+      "uniqueBuyers": 1395,
+      "category": null
+    },
+    {
+      "name": "WachAI",
+      "completedJobs": 5279,
+      "successRate": "85.39%",
+      "uniqueBuyers": 361,
+      "category": "information"
+    }
+  ],
+  "topAgentsByBuyers": [
+    {
+      "name": "Ethy AI",
+      "uniqueBuyers": 7231,
       "completedJobs": 1135997
     },
     {
       "name": "Axelrod",
+      "uniqueBuyers": 4711,
       "completedJobs": 126573
     },
     {
-      "name": "Director Lucien",
-      "completedJobs": 59175
+      "name": "aixbt",
+      "uniqueBuyers": 1675,
+      "completedJobs": 19954
+    },
+    {
+      "name": "Loky",
+      "uniqueBuyers": 1557,
+      "completedJobs": 15639
+    },
+    {
+      "name": "Maya",
+      "uniqueBuyers": 1395,
+      "completedJobs": 7582
     }
   ],
   "cta": {
