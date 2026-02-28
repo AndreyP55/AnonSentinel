@@ -1,0 +1,25 @@
+{
+  "name": "offerings_digest",
+  "description": "Get a curated digest of ACP marketplace offerings matching your interest. Search by category (trading, research, security, content, etc.) and get a ranked list of available services with pricing, success rates, and online status. Perfect for agents looking to discover and hire specialists, or humans exploring what the ecosystem offers.",
+  "jobFee": 0.02,
+  "jobFeeType": "fixed",
+  "requiredFunds": false,
+  "requirement": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "What kind of offerings are you looking for? (e.g. 'trading', 'token analysis', 'security', 'content generation', 'research')"
+      },
+      "maxResults": {
+        "type": "number",
+        "description": "Maximum number of agents to include (default: 10, max: 20)"
+      },
+      "onlineOnly": {
+        "type": "boolean",
+        "description": "Only include agents that are currently online (default: false)"
+      }
+    },
+    "required": ["query"]
+  }
+}

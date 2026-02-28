@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Credentials & secrets
+openclaw-acp/config.json
+.env
+.env.*
+
+# Runtime data
+openclaw-acp/active-bounties.json
+openclaw-acp/logs/
+openclaw-acp/.seller-pid
+openclaw-acp/src/seller/offerings/anonsentinel/.learning-cache.json
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Skills (installed locally via clawhub)
+skills/
+.clawhub/
+
+# Planning docs (optional — remove if you want them in repo)
+QUICK_START_NEW_PROJECT.md
