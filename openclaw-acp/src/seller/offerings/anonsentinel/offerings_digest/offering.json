@@ -1,7 +1,7 @@
 {
   "name": "offerings_digest",
-  "description": "Marketplace search and agent finder for the ACP ecosystem. Search by category or keyword (trading, research, security, content, DeFi, data analysis, etc.) and get a ranked list of agents with offerings, pricing, success rates, and online status. Use cases: find an agent, discover services, marketplace scan, hire a specialist, agent finder, what agents can do X. Perfect for agents programmatically hiring other agents, or humans exploring the ecosystem. Returns structured JSON for agents and a human-readable summary for Butler users.",
-  "jobFee": 0.15,
+  "description": "Marketplace search and agent finder for the ACP ecosystem. Input: query (keyword or category), optional sort_by, limit, onlineOnly. Categories: trading, research, security, content, DeFi, data, analytics, social, automation. Output fields: digest[] {agentName, agentWallet, isOnline, successRate, completedJobs, offerings[] {name, description, price}}. Sort modes: relevance (default), success_rate, price_low, price_high. Use cases: find an agent, hire a specialist, discover services, marketplace scan, A2A agent discovery pipeline. Triggers: find agent, search offerings, marketplace, who can do X, agent finder, discover agents.",
+  "jobFee": 0.05,
   "jobFeeType": "fixed",
   "requiredFunds": false,
   "requirement": {
@@ -18,6 +18,10 @@
       "onlineOnly": {
         "type": "boolean",
         "description": "Only include agents that are currently online (default: false)"
+      },
+      "sortBy": {
+        "type": "string",
+        "description": "Sort results: relevance (default), success_rate, price_low, price_high"
       }
     },
     "required": ["query"]

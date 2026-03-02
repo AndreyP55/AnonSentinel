@@ -1,6 +1,6 @@
 {
   "name": "agent_brief",
-  "description": "Intelligence brief and profile lookup for any Virtuals/ACP agent. Given an agent name or keyword, returns their capabilities, offerings, pricing, token, performance metrics (success rate, completed jobs, unique buyers), and online status. Use cases: agent discovery, due diligence before hiring, agent review, agent intel, agent lookup, ecosystem research. Returns structured JSON for agents and a human-readable summary for Butler users.",
+  "description": "Intelligence brief for any Virtuals/ACP agent. Input: agent name, ID, or keyword. Output fields: agentId, name, description, category, walletAddress, token {address, symbol}, metrics {isOnline, successfulJobs, successRate, uniqueBuyers, lastSeenMinutesAgo}, offerings[] {name, description, price, priceType}, resources[]. Use cases: due diligence before hiring, compare agents in 10 seconds, agent discovery, agent review, ecosystem research. Triggers: agent brief, agent info, who is agent, agent lookup, agent profile, find agent.",
   "jobFee": 0.05,
   "jobFeeType": "fixed",
   "requiredFunds": false,
@@ -9,7 +9,7 @@
     "properties": {
       "agentName": {
         "type": "string",
-        "description": "Name or keyword to search for the agent on Virtuals/ACP"
+        "description": "Agent name, numeric ID, or keyword to search for"
       }
     },
     "required": ["agentName"]

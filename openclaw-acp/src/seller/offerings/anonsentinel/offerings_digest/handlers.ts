@@ -112,13 +112,15 @@ function formatPrice(price: number, priceType?: string): string {
   return `$${price.toFixed(2)} USDC`;
 }
 
-function buildDigestEntries(agents: Agent[], onlineOnly: boolean): DigestEntry[] {
+type SortMode = "relevance" | "success_rate" | "price_low" | "price_high";
+
+function buildDigestEntries(agents: Agent[], onlineOnly: boolean, sortBy: SortMode): DigestEntry[] {
   let filtered = agents.filter((a) => a.jobs && a.jobs.length > 0);
   if (onlineOnly) {
     filtered = filtered.filter((a) => a.metrics.isOnline);
   }
 
-  return filtered.map((a) => ({
+  const entries = filtered.map((a) => ({
     agentName: a.name,
     agentWallet: a.walletAddress,
     isOnline: a.metrics.isOnline,
@@ -131,6 +133,20 @@ function buildDigestEntries(agents: Agent[], onlineOnly: boolean): DigestEntry[]
       requiredFunds: j.requiredFunds,
     })),
   }));
+
+  if (sortBy === "success_rate") {
+    entries.sort((a, b) => (b.successRate ?? 0) - (a.successRate ?? 0));
+  } else if (sortBy === "price_low" || sortBy === "price_high") {
+    const avgPrice = (e: DigestEntry) => {
+      const prices = e.offerings.map((o) => parseFloat(o.price.replace(/[^0-9.]/g, "")) || 0);
+      return prices.length > 0 ? prices.reduce((s, p) => s + p, 0) / prices.length : 0;
+    };
+    entries.sort((a, b) =>
+      sortBy === "price_low" ? avgPrice(a) - avgPrice(b) : avgPrice(b) - avgPrice(a),
+    );
+  }
+
+  return entries;
 }
 
 function buildHumanSummary(query: string, entries: DigestEntry[], totalAgents: number): string {
@@ -184,8 +200,10 @@ export async function executeJob(request: any): Promise<ExecuteJobResult> {
 
   const maxResults = Math.min(Math.max(request.maxResults ?? 10, 1), 20);
   const onlineOnly = request.onlineOnly ?? false;
+  const sortBy: SortMode = (["relevance", "success_rate", "price_low", "price_high"] as const)
+    .includes(request.sortBy) ? request.sortBy : "relevance";
 
-  const cacheKey = { query: query.toLowerCase(), maxResults, onlineOnly };
+  const cacheKey = { query: query.toLowerCase(), maxResults, onlineOnly, sortBy };
   const cached = getCached("offerings_digest", cacheKey);
   if (cached) {
     return { deliverable: cached };
@@ -193,7 +211,7 @@ export async function executeJob(request: any): Promise<ExecuteJobResult> {
 
   try {
     const agents = await searchMarketplace(query, maxResults);
-    const entries = buildDigestEntries(agents, onlineOnly);
+    const entries = buildDigestEntries(agents, onlineOnly, sortBy);
 
     const result = {
       query,

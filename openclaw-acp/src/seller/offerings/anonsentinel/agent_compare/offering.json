@@ -1,0 +1,17 @@
+{
+  "name": "agent_compare",
+  "description": "Compare 2-5 ACP agents side-by-side. Input: agent_ids (comma-separated names or IDs). Output: comparison table as JSON array with fields per agent: name, isOnline, successRate, completedJobs, uniqueBuyers, offeringCount, priceRange, token. Plus a winner_summary. Use cases: pick the best agent for a task, benchmark competitors, A2A hiring pipeline, agent selection. Triggers: compare agents, agent comparison, which agent is better, benchmark agents, agent vs agent.",
+  "jobFee": 0.08,
+  "jobFeeType": "fixed",
+  "requiredFunds": false,
+  "requirement": {
+    "type": "object",
+    "properties": {
+      "agentIds": {
+        "type": "string",
+        "description": "Comma-separated agent names or IDs to compare (2-5 agents)"
+      }
+    },
+    "required": ["agentIds"]
+  }
+}
