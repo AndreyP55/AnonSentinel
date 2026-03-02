@@ -22,7 +22,10 @@ interface TokenPair {
 }
 
 // ---------------------------------------------------------------------------
-// Codex API (powers Defined.fi) — sees bonding‑curve pairs that DEXScreener misses
+// Codex API (powers Defined.fi) — sees bonding-curve pairs that DEXScreener misses
+// Uses two queries:
+//   1) listPairsWithMetadataForToken — pairs, liquidity, volume, exchange info
+//   2) getTokenPrices — aggregate USD price
 // ---------------------------------------------------------------------------
 const CODEX_GQL = "https://graph.codex.io/graphql";
 const BASE_NETWORK_ID = 8453;
@@ -31,32 +34,39 @@ function getCodexApiKey(): string | undefined {
   return process.env.CODEX_API_KEY;
 }
 
-const CODEX_QUERY = `
-query FilterPairs($tokenAddress: String!) {
-  filterPairs(
-    filters: {}
-    pairs: [$tokenAddress]
-    statsType: UNFILTERED
+const PAIRS_QUERY = `
+query ListPairs($tokenAddress: String!, $networkId: Int!) {
+  listPairsWithMetadataForToken(
+    tokenAddress: $tokenAddress
+    networkId: $networkId
+    limit: 10
   ) {
     results {
-      createdAt
-      lastTransaction
-      buyCount24
-      sellCount24
-      highPriceUsd24
+      volume
       liquidity
-      marketCap
+      quoteToken
+      token {
+        address
+        name
+        symbol
+        networkId
+        info {
+          circulatingSupply
+        }
+      }
+      backingToken {
+        address
+        name
+        symbol
+        networkId
+      }
       pair {
         address
         networkId
-        token0 { address name symbol }
-        token1 { address name symbol }
+        token0
+        token1
         createdAt
-        exchangeHash
       }
-      priceUsd
-      priceChange24
-      volumeUSD24
       exchange {
         name
       }
@@ -64,46 +74,91 @@ query FilterPairs($tokenAddress: String!) {
   }
 }`;
 
-interface CodexPairResult {
-  createdAt: number;
-  lastTransaction: number;
-  buyCount24: number;
-  sellCount24: number;
-  liquidity: number;
-  marketCap: number;
-  priceUsd: number;
-  priceChange24: number;
-  volumeUSD24: number;
-  pair: {
-    address: string;
-    networkId: number;
-    token0: { address: string; name: string; symbol: string };
-    token1: { address: string; name: string; symbol: string };
-    createdAt: number;
-    exchangeHash: string;
-  };
+const PRICE_QUERY = `
+query GetPrice($address: String!, $networkId: Int!) {
+  getTokenPrices(
+    inputs: [{ address: $address, networkId: $networkId }]
+  ) {
+    address
+    priceUsd
+  }
+}`;
+
+interface CodexPairMeta {
+  volume: number | null;
+  liquidity: number | null;
+  quoteToken: string | null;
+  token: { address: string; name: string; symbol: string; networkId: number; info?: { circulatingSupply?: number } } | null;
+  backingToken: { address: string; name: string; symbol: string; networkId: number } | null;
+  pair: { address: string; networkId: number; token0: string; token1: string; createdAt: number | null };
   exchange: { name: string } | null;
 }
 
-function codexToTokenPair(r: CodexPairResult, tokenAddress: string): TokenPair {
+async function codexGql<T>(apiKey: string, query: string, variables: Record<string, unknown>, label: string): Promise<T | null> {
+  const res = await withRetry(async () => {
+    const r = await fetch(CODEX_GQL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: apiKey,
+      },
+      body: JSON.stringify({ query, variables }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!r.ok) {
+      const body = await r.text().catch(() => "");
+      console.error(`[health_check] Codex ${label} HTTP ${r.status}: ${body.slice(0, 300)}`);
+      const err: any = new Error(`Codex ${label} returned ${r.status}`);
+      err.status = r.status;
+      throw err;
+    }
+    return r;
+  }, `codex ${label}`);
+
+  const json = await res.json() as any;
+  if (json.errors) {
+    console.error(`[health_check] Codex ${label} GQL errors:`, JSON.stringify(json.errors).slice(0, 500));
+    return null;
+  }
+  return json.data as T;
+}
+
+function codexMetaToTokenPair(
+  r: CodexPairMeta,
+  tokenAddress: string,
+  priceUsd: string,
+): TokenPair {
   const addr = tokenAddress.toLowerCase();
-  const isToken0 = r.pair.token0.address.toLowerCase() === addr;
-  const base = isToken0 ? r.pair.token0 : r.pair.token1;
-  const quote = isToken0 ? r.pair.token1 : r.pair.token0;
+  const isToken0 = r.pair.token0.toLowerCase() === addr;
+
+  const baseInfo = r.backingToken ?? r.token;
+  const quoteInfo = r.backingToken ? r.token : r.backingToken;
+
+  const base = baseInfo
+    ? { address: baseInfo.address, name: baseInfo.name, symbol: baseInfo.symbol }
+    : { address: addr, name: "Unknown", symbol: "???" };
+
+  const quote = quoteInfo
+    ? { address: quoteInfo.address, name: quoteInfo.name, symbol: quoteInfo.symbol }
+    : { address: isToken0 ? r.pair.token1 : r.pair.token0, name: "Unknown", symbol: "???" };
+
+  const circulatingSupply = r.token?.info?.circulatingSupply;
+  const price = parseFloat(priceUsd) || 0;
+  const fdv = circulatingSupply ? price * circulatingSupply : 0;
 
   return {
     source: "codex",
     chainId: "base",
-    dexId: r.exchange?.name ?? "Unknown",
+    dexId: r.exchange?.name ?? "Unknown DEX",
     pairAddress: r.pair.address,
     baseToken: base,
     quoteToken: quote,
-    priceUsd: String(r.priceUsd ?? 0),
-    txns: { h24: { buys: r.buyCount24 ?? 0, sells: r.sellCount24 ?? 0 } },
-    volume: { h24: r.volumeUSD24 ?? 0 },
-    priceChange: { h24: r.priceChange24 ?? 0 },
+    priceUsd,
+    txns: { h24: { buys: 0, sells: 0 } },
+    volume: { h24: r.volume ?? 0 },
+    priceChange: { h24: 0 },
     liquidity: { usd: r.liquidity ?? 0 },
-    fdv: r.marketCap ?? 0,
+    fdv,
     pairCreatedAt: (r.pair.createdAt ?? 0) * 1000,
   };
 }
@@ -118,39 +173,26 @@ async function fetchFromCodex(tokenAddress: string): Promise<TokenPair[] | null>
   console.log("[health_check] Querying Codex API for", tokenAddress);
 
   try {
-    const res = await withRetry(async () => {
-      const r = await fetch(CODEX_GQL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: apiKey,
-        },
-        body: JSON.stringify({
-          query: CODEX_QUERY,
-          variables: { tokenAddress: `${tokenAddress}:${BASE_NETWORK_ID}` },
-        }),
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!r.ok) {
-        const err: any = new Error(`Codex returned ${r.status}`);
-        err.status = r.status;
-        throw err;
-      }
-      return r;
-    }, "codex filterPairs");
+    const [pairsData, priceData] = await Promise.all([
+      codexGql<{ listPairsWithMetadataForToken: { results: CodexPairMeta[] } }>(
+        apiKey, PAIRS_QUERY,
+        { tokenAddress, networkId: BASE_NETWORK_ID },
+        "listPairs",
+      ),
+      codexGql<{ getTokenPrices: Array<{ address: string; priceUsd: number }> }>(
+        apiKey, PRICE_QUERY,
+        { address: tokenAddress, networkId: BASE_NETWORK_ID },
+        "getPrice",
+      ),
+    ]);
 
-    const json = await res.json() as any;
+    const results = pairsData?.listPairsWithMetadataForToken?.results ?? [];
+    const priceUsd = String(priceData?.getTokenPrices?.[0]?.priceUsd ?? "0");
 
-    if (json.errors) {
-      console.error("[health_check] Codex returned errors:", JSON.stringify(json.errors));
-      return null;
-    }
-
-    const results: CodexPairResult[] = json?.data?.filterPairs?.results ?? [];
-    console.log(`[health_check] Codex returned ${results.length} pair(s)`);
+    console.log(`[health_check] Codex: ${results.length} pair(s), price=$${priceUsd}`);
     if (results.length === 0) return null;
 
-    return results.map((r) => codexToTokenPair(r, tokenAddress));
+    return results.map((r) => codexMetaToTokenPair(r, tokenAddress, priceUsd));
   } catch (err) {
     console.error("[health_check] Codex fetch failed:", err);
     return null;
@@ -169,9 +211,7 @@ interface DexScreenerPair {
   baseToken: { address: string; name: string; symbol: string };
   quoteToken: { address: string; name: string; symbol: string };
   priceUsd: string;
-  txns: {
-    h24: { buys: number; sells: number };
-  };
+  txns: { h24: { buys: number; sells: number } };
   volume: { h24: number };
   priceChange: { h24: number };
   liquidity: { usd: number };
@@ -226,7 +266,7 @@ async function fetchFromDexScreener(tokenAddress: string): Promise<TokenPair[] |
 }
 
 // ---------------------------------------------------------------------------
-// Unified fetch: Codex first, DEXScreener fallback, merge & pick best pair
+// Unified fetch: Codex + DEXScreener in parallel, merge & pick best pair
 // ---------------------------------------------------------------------------
 function scorePair(p: TokenPair): number {
   const liq = p.liquidity?.usd ?? 0;
@@ -247,7 +287,9 @@ async function fetchTokenData(tokenAddress: string): Promise<TokenPair | null> {
 
   if (allPairs.length === 0) return null;
 
-  return allPairs.sort((a, b) => scorePair(b) - scorePair(a))[0];
+  const best = allPairs.sort((a, b) => scorePair(b) - scorePair(a))[0];
+  console.log(`[health_check] Best pair: ${best.baseToken.symbol}/${best.quoteToken.symbol} on ${best.dexId} (${best.source}) liq=${best.liquidity.usd} vol=${best.volume.h24}`);
+  return best;
 }
 
 // ---------------------------------------------------------------------------
