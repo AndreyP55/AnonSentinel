@@ -25,6 +25,12 @@ interface DexPair {
   pairCreatedAt: number;
 }
 
+function scorePair(p: DexPair): number {
+  const liq = p.liquidity?.usd ?? 0;
+  const vol = p.volume?.h24 ?? 0;
+  return liq * 0.6 + vol * 0.4;
+}
+
 async function fetchTokenData(tokenAddress: string): Promise<DexPair | null> {
   const response = await withRetry(async () => {
     const res = await fetch(`${DEXSCREENER_API}/${tokenAddress}`, { signal: AbortSignal.timeout(30000) });
@@ -42,9 +48,9 @@ async function fetchTokenData(tokenAddress: string): Promise<DexPair | null> {
   if (!data.pairs || data.pairs.length === 0) return null;
 
   const basePairs = data.pairs.filter((p) => p.chainId === "base");
-  if (basePairs.length === 0) return data.pairs[0];
+  const candidates = basePairs.length > 0 ? basePairs : data.pairs;
 
-  return basePairs.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0))[0];
+  return candidates.sort((a, b) => scorePair(b) - scorePair(a))[0];
 }
 
 function calculateHealthScore(pair: DexPair): { score: number; flags: string[] } {
@@ -103,8 +109,10 @@ function buildHumanSummary(pair: DexPair, score: number, flags: string[]): strin
   lines.push(`ECOSYSTEM HEALTH CHECK: ${pair.baseToken.symbol}`);
   lines.push("=".repeat(40));
   lines.push(`Token: ${pair.baseToken.name} (${pair.baseToken.symbol})`);
+  lines.push(`Pair: ${pair.baseToken.symbol}/${pair.quoteToken.symbol} on ${pair.dexId}`);
+  lines.push(`Pair Address: ${pair.pairAddress}`);
   lines.push(`Price: $${pair.priceUsd}`);
-  lines.push(`Chain: ${pair.chainId} | DEX: ${pair.dexId}`);
+  lines.push(`Chain: ${pair.chainId}`);
   lines.push(`Age: ${ageDays} days`);
 
   lines.push("\n--- Health Score ---");

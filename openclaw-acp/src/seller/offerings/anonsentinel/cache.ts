@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 
 const CACHE_FILE = path.join(__dirname, ".learning-cache.json");
 const MAX_ENTRIES_PER_OFFERING = 100;
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes — crypto data goes stale fast
 
 interface CacheEntry {
   key: string;
