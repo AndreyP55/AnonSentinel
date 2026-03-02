@@ -7,6 +7,9 @@
 //   (or)  acp serve start
 // =============================================================================
 
+import dotenv from "dotenv";
+dotenv.config();
+
 import { connectAcpSocket } from "./acpSocket.js";
 import { acceptOrRejectJob, requestPayment, deliverJob } from "./sellerApi.js";
 import { loadOffering, listOfferings } from "./offerings.js";
