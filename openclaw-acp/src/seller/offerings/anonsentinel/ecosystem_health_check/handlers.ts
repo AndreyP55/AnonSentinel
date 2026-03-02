@@ -2,58 +2,245 @@ import type { ExecuteJobResult, ValidationResult } from "../../../runtime/offeri
 import { getCached, setCache } from "../cache.js";
 import { withRetry } from "../retry.js";
 
-const DEXSCREENER_API = "https://api.dexscreener.com/latest/dex/tokens";
-
-interface DexPair {
+// ---------------------------------------------------------------------------
+// Unified pair shape used by scoring / formatting
+// ---------------------------------------------------------------------------
+interface TokenPair {
+  source: "codex" | "dexscreener";
   chainId: string;
   dexId: string;
   pairAddress: string;
   baseToken: { address: string; name: string; symbol: string };
   quoteToken: { address: string; name: string; symbol: string };
   priceUsd: string;
-  priceNative: string;
-  txns: {
-    h24: { buys: number; sells: number };
-    h6: { buys: number; sells: number };
-    h1: { buys: number; sells: number };
-    m5: { buys: number; sells: number };
-  };
-  volume: { h24: number; h6: number; h1: number; m5: number };
-  priceChange: { h24: number; h6: number; h1: number; m5: number };
-  liquidity: { usd: number; base: number; quote: number };
+  txns: { h24: { buys: number; sells: number } };
+  volume: { h24: number };
+  priceChange: { h24: number };
+  liquidity: { usd: number };
   fdv: number;
   pairCreatedAt: number;
 }
 
-function scorePair(p: DexPair): number {
+// ---------------------------------------------------------------------------
+// Codex API (powers Defined.fi) — sees bonding‑curve pairs that DEXScreener misses
+// ---------------------------------------------------------------------------
+const CODEX_GQL = "https://graph.codex.io/graphql";
+const BASE_NETWORK_ID = 8453;
+
+function getCodexApiKey(): string | undefined {
+  return process.env.CODEX_API_KEY;
+}
+
+const CODEX_QUERY = `
+query FilterPairs($tokenAddress: String!) {
+  filterPairs(
+    filters: {}
+    pairs: [$tokenAddress]
+    statsType: UNFILTERED
+  ) {
+    results {
+      createdAt
+      lastTransaction
+      buyCount24
+      sellCount24
+      highPriceUsd24
+      liquidity
+      marketCap
+      pair {
+        address
+        networkId
+        token0 { address name symbol }
+        token1 { address name symbol }
+        createdAt
+        exchangeHash
+      }
+      priceUsd
+      priceChange24
+      volumeUSD24
+      exchange {
+        name
+      }
+    }
+  }
+}`;
+
+interface CodexPairResult {
+  createdAt: number;
+  lastTransaction: number;
+  buyCount24: number;
+  sellCount24: number;
+  liquidity: number;
+  marketCap: number;
+  priceUsd: number;
+  priceChange24: number;
+  volumeUSD24: number;
+  pair: {
+    address: string;
+    networkId: number;
+    token0: { address: string; name: string; symbol: string };
+    token1: { address: string; name: string; symbol: string };
+    createdAt: number;
+    exchangeHash: string;
+  };
+  exchange: { name: string } | null;
+}
+
+function codexToTokenPair(r: CodexPairResult, tokenAddress: string): TokenPair {
+  const addr = tokenAddress.toLowerCase();
+  const isToken0 = r.pair.token0.address.toLowerCase() === addr;
+  const base = isToken0 ? r.pair.token0 : r.pair.token1;
+  const quote = isToken0 ? r.pair.token1 : r.pair.token0;
+
+  return {
+    source: "codex",
+    chainId: "base",
+    dexId: r.exchange?.name ?? "Unknown",
+    pairAddress: r.pair.address,
+    baseToken: base,
+    quoteToken: quote,
+    priceUsd: String(r.priceUsd ?? 0),
+    txns: { h24: { buys: r.buyCount24 ?? 0, sells: r.sellCount24 ?? 0 } },
+    volume: { h24: r.volumeUSD24 ?? 0 },
+    priceChange: { h24: r.priceChange24 ?? 0 },
+    liquidity: { usd: r.liquidity ?? 0 },
+    fdv: r.marketCap ?? 0,
+    pairCreatedAt: (r.pair.createdAt ?? 0) * 1000,
+  };
+}
+
+async function fetchFromCodex(tokenAddress: string): Promise<TokenPair[] | null> {
+  const apiKey = getCodexApiKey();
+  if (!apiKey) return null;
+
+  try {
+    const res = await withRetry(async () => {
+      const r = await fetch(CODEX_GQL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: apiKey,
+        },
+        body: JSON.stringify({
+          query: CODEX_QUERY,
+          variables: { tokenAddress: `${tokenAddress}:${BASE_NETWORK_ID}` },
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!r.ok) {
+        const err: any = new Error(`Codex returned ${r.status}`);
+        err.status = r.status;
+        throw err;
+      }
+      return r;
+    }, "codex filterPairs");
+
+    const json = await res.json() as any;
+    const results: CodexPairResult[] = json?.data?.filterPairs?.results ?? [];
+    if (results.length === 0) return null;
+
+    return results.map((r) => codexToTokenPair(r, tokenAddress));
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// DEXScreener API — fallback, good for graduated tokens on Uniswap etc.
+// ---------------------------------------------------------------------------
+const DEXSCREENER_API = "https://api.dexscreener.com/latest/dex/tokens";
+
+interface DexScreenerPair {
+  chainId: string;
+  dexId: string;
+  pairAddress: string;
+  baseToken: { address: string; name: string; symbol: string };
+  quoteToken: { address: string; name: string; symbol: string };
+  priceUsd: string;
+  txns: {
+    h24: { buys: number; sells: number };
+  };
+  volume: { h24: number };
+  priceChange: { h24: number };
+  liquidity: { usd: number };
+  fdv: number;
+  pairCreatedAt: number;
+}
+
+function dexScreenerToTokenPair(p: DexScreenerPair): TokenPair {
+  return {
+    source: "dexscreener",
+    chainId: p.chainId,
+    dexId: p.dexId,
+    pairAddress: p.pairAddress,
+    baseToken: p.baseToken,
+    quoteToken: p.quoteToken,
+    priceUsd: p.priceUsd,
+    txns: { h24: { buys: p.txns?.h24?.buys ?? 0, sells: p.txns?.h24?.sells ?? 0 } },
+    volume: { h24: p.volume?.h24 ?? 0 },
+    priceChange: { h24: p.priceChange?.h24 ?? 0 },
+    liquidity: { usd: p.liquidity?.usd ?? 0 },
+    fdv: p.fdv ?? 0,
+    pairCreatedAt: p.pairCreatedAt ?? 0,
+  };
+}
+
+async function fetchFromDexScreener(tokenAddress: string): Promise<TokenPair[] | null> {
+  try {
+    const response = await withRetry(async () => {
+      const res = await fetch(`${DEXSCREENER_API}/${tokenAddress}`, {
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok && (res.status === 502 || res.status === 503 || res.status === 504)) {
+        const err: any = new Error(`DEXScreener returned ${res.status}`);
+        err.status = res.status;
+        throw err;
+      }
+      return res;
+    }, "dexscreener token");
+
+    if (!response.ok) return null;
+
+    const data = await response.json() as { pairs?: DexScreenerPair[] };
+    if (!data.pairs || data.pairs.length === 0) return null;
+
+    const basePairs = data.pairs.filter((p) => p.chainId === "base");
+    const candidates = basePairs.length > 0 ? basePairs : data.pairs;
+
+    return candidates.map(dexScreenerToTokenPair);
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Unified fetch: Codex first, DEXScreener fallback, merge & pick best pair
+// ---------------------------------------------------------------------------
+function scorePair(p: TokenPair): number {
   const liq = p.liquidity?.usd ?? 0;
   const vol = p.volume?.h24 ?? 0;
   return liq * 0.6 + vol * 0.4;
 }
 
-async function fetchTokenData(tokenAddress: string): Promise<DexPair | null> {
-  const response = await withRetry(async () => {
-    const res = await fetch(`${DEXSCREENER_API}/${tokenAddress}`, { signal: AbortSignal.timeout(30000) });
-    if (!res.ok && (res.status === 502 || res.status === 503 || res.status === 504)) {
-      const err: any = new Error(`DEXScreener returned ${res.status}`);
-      err.status = res.status;
-      throw err;
-    }
-    return res;
-  }, `health_check token ${tokenAddress}`);
+async function fetchTokenData(tokenAddress: string): Promise<TokenPair | null> {
+  const [codexPairs, dexPairs] = await Promise.all([
+    fetchFromCodex(tokenAddress),
+    fetchFromDexScreener(tokenAddress),
+  ]);
 
-  if (!response.ok) return null;
+  const allPairs: TokenPair[] = [
+    ...(codexPairs ?? []),
+    ...(dexPairs ?? []),
+  ];
 
-  const data = await response.json() as { pairs?: DexPair[] };
-  if (!data.pairs || data.pairs.length === 0) return null;
+  if (allPairs.length === 0) return null;
 
-  const basePairs = data.pairs.filter((p) => p.chainId === "base");
-  const candidates = basePairs.length > 0 ? basePairs : data.pairs;
-
-  return candidates.sort((a, b) => scorePair(b) - scorePair(a))[0];
+  return allPairs.sort((a, b) => scorePair(b) - scorePair(a))[0];
 }
 
-function calculateHealthScore(pair: DexPair): { score: number; flags: string[] } {
+// ---------------------------------------------------------------------------
+// Health scoring
+// ---------------------------------------------------------------------------
+function calculateHealthScore(pair: TokenPair): { score: number; flags: string[] } {
   let score = 50;
   const flags: string[] = [];
 
@@ -86,7 +273,7 @@ function calculateHealthScore(pair: DexPair): { score: number; flags: string[] }
   else if (priceChange24 < -10) { score -= 5; }
   else if (priceChange24 > 50) { flags.push("HIGH_VOLATILITY"); }
 
-  const ageMs = Date.now() - (pair.pairCreatedAt ?? Date.now());
+  const ageMs = Date.now() - (pair.pairCreatedAt || Date.now());
   const ageDays = ageMs / (1000 * 60 * 60 * 24);
   if (ageDays >= 30) { score += 5; }
   else if (ageDays < 1) { score -= 10; flags.push("VERY_NEW_TOKEN"); }
@@ -95,15 +282,18 @@ function calculateHealthScore(pair: DexPair): { score: number; flags: string[] }
   return { score: Math.max(0, Math.min(100, score)), flags };
 }
 
+// ---------------------------------------------------------------------------
+// Formatting
+// ---------------------------------------------------------------------------
 function formatUsd(value: number): string {
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
   if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
   return `$${value.toFixed(2)}`;
 }
 
-function buildHumanSummary(pair: DexPair, score: number, flags: string[]): string {
+function buildHumanSummary(pair: TokenPair, score: number, flags: string[]): string {
   const lines: string[] = [];
-  const ageMs = Date.now() - (pair.pairCreatedAt ?? Date.now());
+  const ageMs = Date.now() - (pair.pairCreatedAt || Date.now());
   const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
 
   lines.push(`ECOSYSTEM HEALTH CHECK: ${pair.baseToken.symbol}`);
@@ -113,6 +303,7 @@ function buildHumanSummary(pair: DexPair, score: number, flags: string[]): strin
   lines.push(`Pair Address: ${pair.pairAddress}`);
   lines.push(`Price: $${pair.priceUsd}`);
   lines.push(`Chain: ${pair.chainId}`);
+  lines.push(`Data Source: ${pair.source === "codex" ? "Codex (Defined.fi)" : "DEXScreener"}`);
   lines.push(`Age: ${ageDays} days`);
 
   lines.push("\n--- Health Score ---");
@@ -146,6 +337,9 @@ function buildHumanSummary(pair: DexPair, score: number, flags: string[]): strin
   return lines.join("\n");
 }
 
+// ---------------------------------------------------------------------------
+// Job execution
+// ---------------------------------------------------------------------------
 export async function executeJob(request: any): Promise<ExecuteJobResult> {
   const tokenAddress = request.tokenAddress?.trim();
   if (!tokenAddress) {
@@ -178,6 +372,7 @@ export async function executeJob(request: any): Promise<ExecuteJobResult> {
       chain: pair.chainId,
       dex: pair.dexId,
       pairAddress: pair.pairAddress,
+      dataSource: pair.source === "codex" ? "Codex (Defined.fi)" : "DEXScreener",
       priceUsd: pair.priceUsd,
       healthScore: score,
       flags,
@@ -187,7 +382,7 @@ export async function executeJob(request: any): Promise<ExecuteJobResult> {
         fdv: pair.fdv ?? 0,
         txns24h: { buys: pair.txns?.h24?.buys ?? 0, sells: pair.txns?.h24?.sells ?? 0 },
         priceChange24h: pair.priceChange?.h24 ?? 0,
-        pairAgeDays: Math.floor((Date.now() - (pair.pairCreatedAt ?? Date.now())) / (1000 * 60 * 60 * 24)),
+        pairAgeDays: Math.floor((Date.now() - (pair.pairCreatedAt || Date.now())) / (1000 * 60 * 60 * 24)),
       },
       human_summary: buildHumanSummary(pair, score, flags),
     };
