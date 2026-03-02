@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-03-02T13:15:21.654Z",
+  "generatedAt": "2026-03-02T18:59:07.520Z",
   "marketplace": {
-    "totalAgents": 17413,
+    "totalAgents": 17583,
     "sampleSize": 100,
     "agentsWithOfferings": 67,
     "agentsWithOfferingsPercent": 67,
@@ -98,9 +98,9 @@
     },
     {
       "name": "Loky",
-      "completedJobs": 15640,
+      "completedJobs": 15647,
       "successRate": "97.43%",
-      "uniqueBuyers": 1557,
+      "uniqueBuyers": 1564,
       "category": "productivity"
     },
     {
@@ -143,8 +143,8 @@
     },
     {
       "name": "Loky",
-      "uniqueBuyers": 1557,
-      "completedJobs": 15640
+      "uniqueBuyers": 1564,
+      "completedJobs": 15647
     },
     {
       "name": "Maya",
