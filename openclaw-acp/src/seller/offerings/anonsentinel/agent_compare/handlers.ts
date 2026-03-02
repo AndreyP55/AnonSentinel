@@ -20,18 +20,36 @@ interface AgentSnapshot {
   walletAddress: string;
 }
 
+function extractId(input: string): number | null {
+  if (/^\d+$/.test(input)) return parseInt(input, 10);
+  const m = input.match(/(?:agent-details|\/agent)\/(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
 async function resolveAgent(query: string): Promise<AgentSnapshot | null> {
   let agent: any = null;
 
-  try {
-    const res = await axios.get<{ data: any[] }>(SEARCH_URL, {
-      params: { query, claw: "true", topK: "3", searchMode: "hybrid" },
-      timeout: 5000,
-    });
-    const agents = res.data?.data ?? [];
-    agent = agents.find((a: any) => a.name?.toLowerCase() === query.toLowerCase()) ?? agents[0];
-  } catch {
-    // fallback
+  const numericId = extractId(query);
+  if (numericId) {
+    try {
+      const res = await axios.get(AGENTS_API, {
+        params: { "filters[id][$eq]": String(numericId) },
+        timeout: 15000,
+        headers: { Accept: "application/json", Origin: "https://agdp.io", Referer: "https://agdp.io/" },
+      });
+      agent = res.data?.data?.[0] ?? null;
+    } catch { /* fallback to name search */ }
+  }
+
+  if (!agent) {
+    try {
+      const res = await axios.get<{ data: any[] }>(SEARCH_URL, {
+        params: { query, claw: "true", topK: "3", searchMode: "hybrid" },
+        timeout: 5000,
+      });
+      const agents = res.data?.data ?? [];
+      agent = agents.find((a: any) => a.name?.toLowerCase() === query.toLowerCase()) ?? agents[0];
+    } catch { /* fallback */ }
   }
 
   if (!agent) {

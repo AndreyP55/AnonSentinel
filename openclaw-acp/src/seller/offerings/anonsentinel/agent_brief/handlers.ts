@@ -124,8 +124,73 @@ async function searchAgentViaFiltersAPI(query: string): Promise<Agent | null> {
   };
 }
 
+function extractAgentId(input: string): number | null {
+  if (/^\d+$/.test(input)) return parseInt(input, 10);
+
+  const urlPatterns = [
+    /agent-details\/(\d+)/,
+    /\/agent\/(\d+)/,
+    /agdp\.io\/.*?(\d{4,})/,
+    /virtuals\.io\/.*?(\d{4,})/,
+  ];
+  for (const re of urlPatterns) {
+    const m = input.match(re);
+    if (m) return parseInt(m[1], 10);
+  }
+  return null;
+}
+
+async function fetchAgentById(agentId: number): Promise<Agent | null> {
+  try {
+    const res = await axios.get(AGENTS_API, {
+      params: { "filters[id][$eq]": String(agentId) },
+      timeout: 15000,
+      headers: { Accept: "application/json", Origin: "https://agdp.io", Referer: "https://agdp.io/" },
+    });
+    const agent = res.data?.data?.[0];
+    if (!agent) return null;
+
+    let metrics: any = {};
+    try {
+      const mr = await axios.get(`${METRICS_API}/${agentId}`, {
+        timeout: 10000,
+        headers: { Accept: "application/json", Origin: "https://agdp.io", Referer: "https://agdp.io/" },
+      });
+      metrics = mr.data?.data ?? {};
+    } catch { /* use basic */ }
+
+    return {
+      id: agent.id,
+      name: metrics.name || agent.name,
+      description: agent.description || "",
+      walletAddress: agent.walletAddress || metrics.walletAddress || "",
+      tokenAddress: agent.tokenAddress ?? null,
+      symbol: agent.symbol ?? null,
+      category: agent.category ?? null,
+      metrics: {
+        successfulJobCount: metrics.successfulJobCount ?? agent.successfulJobCount ?? null,
+        successRate: metrics.successRate ?? agent.successRate ?? null,
+        uniqueBuyerCount: metrics.uniqueBuyerCount ?? agent.uniqueBuyerCount ?? null,
+        minsFromLastOnlineTime: null,
+        isOnline: metrics.isOnline ?? false,
+      },
+      jobs: agent.jobs ?? [],
+      resources: agent.resources ?? [],
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function searchAgent(query: string): Promise<Agent | null> {
-  // Strategy 1: Search API — one quick attempt (5s timeout, no retry)
+  const agentId = extractAgentId(query);
+  if (agentId) {
+    console.log(`[agent_brief] Detected numeric ID ${agentId}, fetching directly`);
+    const result = await fetchAgentById(agentId);
+    if (result) return result;
+    console.log(`[agent_brief] Agent ID ${agentId} not found, falling back to name search`);
+  }
+
   try {
     const result = await searchAgentViaSearchAPI(query);
     if (result) {
@@ -136,7 +201,6 @@ async function searchAgent(query: string): Promise<Agent | null> {
     console.log(`[agent_brief] Search API failed (${err?.response?.status ?? err?.code}), switching to filters API...`);
   }
 
-  // Strategy 2: Filters API + Metrics API — reliable, with retry
   try {
     const result = await withRetry(
       () => searchAgentViaFiltersAPI(query),

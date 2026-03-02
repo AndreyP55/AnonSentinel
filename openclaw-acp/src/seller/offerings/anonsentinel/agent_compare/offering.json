@@ -1,6 +1,6 @@
 {
   "name": "agent_compare",
-  "description": "Compare 2-5 ACP agents side-by-side. Input: agent_ids (comma-separated names or IDs). Output: comparison table as JSON array with fields per agent: name, isOnline, successRate, completedJobs, uniqueBuyers, offeringCount, priceRange, token. Plus a winner_summary. Use cases: pick the best agent for a task, benchmark competitors, A2A hiring pipeline, agent selection. Triggers: compare agents, agent comparison, which agent is better, benchmark agents, agent vs agent.",
+  "description": "Compare 2-5 ACP agents side-by-side. Input: agentIds — comma-separated numeric IDs (recommended) or exact names (e.g. '12446, 13053' or 'AnonSentinel, Alpha.Intelligence'). Use numeric IDs from agdp.io for best accuracy. Output: comparison table per agent: name, isOnline, successRate, completedJobs, uniqueBuyers, offeringCount, priceRange, token + winner_summary. Use cases: pick the best agent, benchmark competitors, A2A hiring. Triggers: compare agents, which agent is better, benchmark, agent vs agent.",
   "jobFee": 0.08,
   "jobFeeType": "fixed",
   "requiredFunds": false,
@@ -9,7 +9,7 @@
     "properties": {
       "agentIds": {
         "type": "string",
-        "description": "Comma-separated agent names or IDs to compare (2-5 agents)"
+        "description": "Comma-separated agent IDs (e.g. '12446, 13053') or names (e.g. 'AnonSentinel, Alpha.Intelligence'). 2-5 agents. Numeric IDs recommended."
       }
     },
     "required": ["agentIds"]
