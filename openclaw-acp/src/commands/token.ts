@@ -20,10 +20,10 @@ export async function launch(
   try {
     const info = await getMyAgentInfo();
     if (info.tokenAddress) {
-      const symbol = info.token?.symbol;
-      output.output({ alreadyLaunched: true, symbol, tokenAddress: info.tokenAddress }, () => {
+      const existingSymbol = info.token?.symbol;
+      output.output({ alreadyLaunched: true, symbol: existingSymbol, tokenAddress: info.tokenAddress }, () => {
         output.heading("Token Already Launched");
-        if (symbol) output.field("Symbol", symbol);
+        if (existingSymbol) output.field("Symbol", existingSymbol);
         output.field("Token Address", info.tokenAddress);
         output.log("\n  Each agent can only launch one token. Run `acp token info` for details.\n");
       });
@@ -57,8 +57,8 @@ export async function info(): Promise<void> {
     output.output(agentInfo, (data) => {
       output.heading("Agent Token");
       if (data.tokenAddress) {
-        output.field("Name", data.token.name);
-        output.field("Symbol", output.formatSymbol(data.token.symbol));
+        output.field("Name", data.token?.name ?? "(unknown)");
+        output.field("Symbol", output.formatSymbol(data.token?.symbol ?? ""));
         output.field("Address", data.tokenAddress);
         output.field("URL", `https://app.virtuals.io/prototypes/${data.tokenAddress}`);
       } else {

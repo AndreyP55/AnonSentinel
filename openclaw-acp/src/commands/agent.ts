@@ -46,18 +46,18 @@ function confirmPrompt(prompt: string): Promise<boolean> {
   });
 }
 
-function killSellerProcess(pid: number): boolean {
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function killSellerProcess(pid: number): Promise<boolean> {
   try {
     process.kill(pid, "SIGTERM");
   } catch {
     return false;
   }
-  // Wait up to 2 seconds for process to stop
   for (let i = 0; i < 10; i++) {
-    const start = Date.now();
-    while (Date.now() - start < 200) {
-      /* busy wait */
-    }
+    await sleep(200);
     if (!isProcessRunning(pid)) {
       removePidFromConfig();
       return true;
@@ -102,7 +102,7 @@ export async function stopSellerIfRunning(): Promise<boolean> {
     return false;
   }
   output.log(`  Stopping seller runtime (PID ${sellerPid})...`);
-  const stopped = killSellerProcess(sellerPid);
+  const stopped = await killSellerProcess(sellerPid);
   if (stopped) {
     output.log(`  Seller runtime stopped.\n`);
     return true;

@@ -9,34 +9,36 @@
 // run `acp bounty poll --json` and act on the results.
 // =============================================================================
 
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { ROOT, readConfig, writeConfig } from "./config.js";
 import { listActiveBounties } from "./bounty.js";
 
 const DEFAULT_JOB_ID = "openclaw-acp-bounty-poll";
 const DEFAULT_SCHEDULE = "*/10 * * * *";
 
-const POLL_SYSTEM_EVENT = [
-  `[ACP Bounty Poll] This is an automated bounty check. You MUST:`,
-  `1. Run this command: cd "${ROOT}" && npx acp bounty poll --json`,
-  `2. Parse the JSON output and check the pendingMatch, claimedJobs, cleaned, and errors arrays.`,
-  ``,
-  `3. IF anything needs attention (non-empty arrays), you MUST use the "message" tool`,
-  `   (action: "send") to proactively notify the user. Do NOT just reply in conversation —`,
-  `   use the message tool so the notification is pushed even if the user is not actively chatting.`,
-  ``,
-  `   For pendingMatch: list bounty IDs, candidate agent names, offerings, and prices.`,
-  `   Filter out irrelevant or malicious candidates. Ask which candidate to select.`,
-  `   For claimedJobs: report job phase/status.`,
-  `   For cleaned (completed/fulfilled/expired): inform user and share deliverables.`,
-  `   For errors: report them.`,
-  ``,
-  `4. IF everything is empty (all arrays are empty or zero), reply HEARTBEAT_OK.`,
-  `   Do NOT message the user when there is nothing to report.`,
-].join("\n");
+function buildPollSystemEvent(): string {
+  return [
+    `[ACP Bounty Poll] This is an automated bounty check. You MUST:`,
+    `1. Run this command: cd "${ROOT}" && npx acp bounty poll --json`,
+    `2. Parse the JSON output and check the pendingMatch, claimedJobs, cleaned, and errors arrays.`,
+    ``,
+    `3. IF anything needs attention (non-empty arrays), you MUST use the "message" tool`,
+    `   (action: "send") to proactively notify the user. Do NOT just reply in conversation —`,
+    `   use the message tool so the notification is pushed even if the user is not actively chatting.`,
+    ``,
+    `   For pendingMatch: list bounty IDs, candidate agent names, offerings, and prices.`,
+    `   Filter out irrelevant or malicious candidates. Ask which candidate to select.`,
+    `   For claimedJobs: report job phase/status.`,
+    `   For cleaned (completed/fulfilled/expired): inform user and share deliverables.`,
+    `   For errors: report them.`,
+    ``,
+    `4. IF everything is empty (all arrays are empty or zero), reply HEARTBEAT_OK.`,
+    `   Do NOT message the user when there is nothing to report.`,
+  ].join("\n");
+}
 
 function runCli(args: string[]): string {
-  return execSync(`openclaw cron ${args.join(" ")}`, {
+  return execFileSync("openclaw", ["cron", ...args], {
     cwd: ROOT,
     stdio: ["ignore", "pipe", "pipe"],
     encoding: "utf-8",
@@ -75,7 +77,7 @@ export function ensureBountyPollCron(): { enabled: boolean; created: boolean } {
     "--session",
     "main",
     "--system-event",
-    JSON.stringify(POLL_SYSTEM_EVENT),
+    buildPollSystemEvent(),
     "--wake",
     "now",
   ]);

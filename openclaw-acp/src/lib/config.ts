@@ -5,6 +5,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { execSync } from "child_process";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -145,21 +146,33 @@ export function findSellerPid(): number | undefined {
   if (config.SELLER_PID !== undefined) {
     removePidFromConfig();
   }
-  // Fallback: scan OS processes
+  // Fallback: scan OS processes (cross-platform)
   try {
-    const { execSync } = require("child_process");
-    const out = execSync('ps ax -o pid,command | grep "seller/runtime/seller.ts" | grep -v grep', {
+    const isWindows = process.platform === "win32";
+    const cmd = isWindows
+      ? 'tasklist /FI "IMAGENAME eq node.exe" /FO CSV /NH'
+      : 'ps ax -o pid,command | grep "seller/runtime/seller.ts" | grep -v grep';
+    const out = execSync(cmd, {
       encoding: "utf-8",
       stdio: ["pipe", "pipe", "pipe"],
     });
     for (const line of out.trim().split("\n")) {
       const trimmed = line.trim();
       if (!trimmed) continue;
-      const pid = parseInt(trimmed.split(/\s+/)[0], 10);
-      if (!isNaN(pid) && pid !== process.pid) return pid;
+      if (isWindows) {
+        if (!trimmed.includes("seller")) continue;
+        const match = trimmed.match(/"(\d+)"/);
+        if (match) {
+          const pid = parseInt(match[1], 10);
+          if (!isNaN(pid) && pid !== process.pid) return pid;
+        }
+      } else {
+        const pid = parseInt(trimmed.split(/\s+/)[0], 10);
+        if (!isNaN(pid) && pid !== process.pid) return pid;
+      }
     }
   } catch {
-    // grep returns exit code 1 when no matches
+    // Process scan failed — acceptable, PID from config is the primary source
   }
   return undefined;
 }

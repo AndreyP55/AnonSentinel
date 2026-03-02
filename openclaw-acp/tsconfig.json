@@ -16,5 +16,5 @@
     "lib": ["ES2022"]
   },
   "include": ["bin/**/*.ts", "src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "scripts", "seller"]
+  "exclude": ["node_modules", "dist", "scripts"]
 }

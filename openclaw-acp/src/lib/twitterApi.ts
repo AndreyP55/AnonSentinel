@@ -143,19 +143,14 @@ export async function searchTweets(
     }
   }
 
-  const { data } = await client.post("/x/search", {
-    query: query,
-    ...queryParams,
-  });
+  const { data } = await client.post("/x/search", queryParams);
 
   return data;
 }
 
 export async function getTimeline(maxResults?: number) {
   const { data } = await client.post("/x/timeline", {
-    params: {
-      maxResults,
-    },
+    ...(maxResults !== undefined ? { maxResults } : {}),
   });
 
   return data;

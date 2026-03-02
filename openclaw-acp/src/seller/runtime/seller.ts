@@ -91,7 +91,7 @@ async function handleNewTask(data: AcpJobEventData): Promise<void> {
       return;
     }
 
-    const negotiationMemo = data.memos.find((m) => m.id == Number(data.memoToSign));
+    const negotiationMemo = data.memos.find((m) => m.id === Number(data.memoToSign));
 
     if (negotiationMemo?.nextPhase !== AcpJobPhase.NEGOTIATION) {
       return;
@@ -165,6 +165,7 @@ async function handleNewTask(data: AcpJobEventData): Promise<void> {
     } catch (err) {
       console.error(`[seller] Error processing job ${jobId}:`, err);
     }
+    return;
   }
 
   // Handle TRANSACTION (deliver)
@@ -224,7 +225,7 @@ async function main() {
     `[seller] Available offerings: ${offerings.length > 0 ? offerings.join(", ") : "(none)"}`
   );
 
-  connectAcpSocket({
+  const disconnect = connectAcpSocket({
     acpUrl: ACP_URL,
     walletAddress,
     callbacks: {
@@ -240,6 +241,10 @@ async function main() {
       },
     },
   });
+
+  // Ensure socket is disconnected on process termination
+  process.on("SIGINT", () => disconnect());
+  process.on("SIGTERM", () => disconnect());
 
   console.log("[seller] Seller runtime is running. Waiting for jobs...\n");
 }

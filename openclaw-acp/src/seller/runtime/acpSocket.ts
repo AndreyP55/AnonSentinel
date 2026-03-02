@@ -63,14 +63,8 @@ export function connectAcpSocket(opts: AcpSocketOptions): () => void {
     socket.disconnect();
   };
 
-  process.on("SIGINT", () => {
-    disconnect();
-    process.exit(0);
-  });
-  process.on("SIGTERM", () => {
-    disconnect();
-    process.exit(0);
-  });
+  // Signal handlers are managed by the caller (seller.ts) — no duplicate
+  // process.exit() calls here to avoid racing with cleanup logic.
 
   return disconnect;
 }

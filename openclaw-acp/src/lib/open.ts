@@ -1,25 +1,30 @@
 // =============================================================================
 // Open a URL in the user's default browser. Platform-specific, no dependencies.
+// Uses spawn (no shell) to prevent command injection via malicious URLs.
 // =============================================================================
 
-import { exec } from "child_process";
+import { spawn } from "child_process";
 
 export function openUrl(url: string): void {
   const platform = process.platform;
-  let cmd: string;
+  let command: string;
+  let args: string[];
 
   if (platform === "darwin") {
-    cmd = `open "${url}"`;
+    command = "open";
+    args = [url];
   } else if (platform === "win32") {
-    cmd = `start "" "${url}"`;
+    command = "cmd";
+    args = ["/c", "start", "", url];
   } else {
-    // Linux / others
-    cmd = `xdg-open "${url}"`;
+    command = "xdg-open";
+    args = [url];
   }
 
-  exec(cmd, (err) => {
-    if (err) {
-      // Silently fail — the URL is always printed as fallback
-    }
-  });
+  try {
+    const child = spawn(command, args, { detached: true, stdio: "ignore" });
+    child.unref();
+  } catch {
+    // Silently fail — the URL is always printed as fallback
+  }
 }

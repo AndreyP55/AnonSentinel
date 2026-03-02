@@ -34,10 +34,18 @@ function resolveOfferingsRoot(agentDirName: string): string {
  * Load a named offering from `src/seller/offerings/<agentDirName>/<name>/`.
  * Expects `offering.json` and `handlers.ts` in that directory.
  */
+function isValidOfferingName(name: string): boolean {
+  return /^[a-zA-Z0-9_-]+$/.test(name);
+}
+
 export async function loadOffering(
   offeringName: string,
   agentDirName: string
 ): Promise<LoadedOffering> {
+  if (!isValidOfferingName(offeringName)) {
+    throw new Error(`Invalid offering name: "${offeringName}". Only alphanumeric, hyphens and underscores are allowed.`);
+  }
+
   const offeringDir = path.resolve(resolveOfferingsRoot(agentDirName), offeringName);
 
   // offering.json
@@ -45,7 +53,12 @@ export async function loadOffering(
   if (!fs.existsSync(configPath)) {
     throw new Error(`offering.json not found: ${configPath}`);
   }
-  const config: OfferingConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+  let config: OfferingConfig;
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+  } catch (err) {
+    throw new Error(`Failed to parse offering.json at ${configPath}: ${err instanceof Error ? err.message : String(err)}`);
+  }
 
   // handlers.ts (dynamically imported)
   const handlersPath = path.join(offeringDir, "handlers.ts");

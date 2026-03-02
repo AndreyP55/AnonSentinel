@@ -94,5 +94,6 @@ export function fatal(msg: string): never {
 }
 
 export function formatSymbol(symbol: string): string {
-  return symbol[0].startsWith("$") ? symbol : `$${symbol}`;
+  if (!symbol) return "$";
+  return symbol.startsWith("$") ? symbol : `$${symbol}`;
 }

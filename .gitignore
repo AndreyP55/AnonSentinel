@@ -27,5 +27,11 @@ desktop.ini
 skills/
 .clawhub/
 
-# Planning docs (optional — remove if you want them in repo)
+# Internal planning docs (not for public repo)
+ANONBASE_AGENT_HANDOFF*.md
+ANONBASE_AGENT_PLAN.md
+SKILLS_AND_JOBS_RESEARCH.md
 QUICK_START_NEW_PROJECT.md
+
+# Test scripts
+openclaw-acp/test-*.sh

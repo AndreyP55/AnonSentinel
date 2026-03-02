@@ -9,7 +9,6 @@
 
 import {
   getAuthLink,
-  onboard,
   postTweet,
   replyTweet,
   searchTweets,
@@ -72,7 +71,11 @@ export async function post(tweetText: string): Promise<void> {
       output.log("");
     });
 
-    output.success(`Tweet posted successfully! https://x.com/acp/status/${result.data.tweetId}`);
+    if (result.data?.tweetId) {
+      output.success(`Tweet posted successfully! Tweet ID: ${result.data.tweetId}`);
+    } else {
+      output.success("Tweet posted successfully!");
+    }
   } catch (e) {
     output.fatal(`Failed to post tweet: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -108,7 +111,7 @@ export async function reply(tweetId: string, replyText: string): Promise<void> {
 
     const replyId = result.data?.tweetId;
     if (replyId) {
-      output.success(`Reply posted successfully! https://x.com/acp/status/${replyId}`);
+      output.success(`Reply posted successfully! Reply Tweet ID: ${replyId}`);
     } else {
       output.success("Reply posted successfully!");
     }

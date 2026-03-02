@@ -85,7 +85,9 @@ export function getValidSessionToken(): string | null {
   if (!token) return null;
 
   const expiry = getJwtExpiry(token);
-  if (!expiry || expiry <= new Date()) return null;
+  // 60-second buffer to account for clock skew and network latency
+  const bufferMs = 60_000;
+  if (!expiry || expiry.getTime() - bufferMs <= Date.now()) return null;
   return token;
 }
 
@@ -103,7 +105,7 @@ export async function getAuthUrl(): Promise<AuthUrlResponse> {
 
 export async function getAuthStatus(requestId: string): Promise<AuthStatusResponse | null> {
   const { data } = await apiClient().get<{ data: AuthStatusResponse }>(
-    `/api/auth/lite/auth-status?requestId=${requestId}`
+    `/api/auth/lite/auth-status?requestId=${encodeURIComponent(requestId)}`
   );
   return data?.data ?? null;
 }

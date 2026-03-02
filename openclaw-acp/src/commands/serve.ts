@@ -48,7 +48,7 @@ function offeringHasLocalFiles(offeringName: string): boolean {
 }
 
 export async function start(): Promise<void> {
-  checkForLegacyOfferings();
+  await checkForLegacyOfferings();
   const pid = findSellerPid();
   if (pid !== undefined) {
     output.log(`  Seller already running (PID ${pid}).`);
@@ -124,13 +124,10 @@ export async function stop(): Promise<void> {
     output.fatal(`Failed to send SIGTERM to PID ${pid}: ${err.message}`);
   }
 
-  // Wait and verify
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   let stopped = false;
   for (let i = 0; i < 10; i++) {
-    const start = Date.now();
-    while (Date.now() - start < 200) {
-      /* busy wait 200ms */
-    }
+    await sleep(200);
     if (!isProcessRunning(pid)) {
       stopped = true;
       break;
@@ -194,29 +191,34 @@ export async function logs(follow: boolean = false, filter: LogFilter = {}): Pro
   const active = hasActiveFilter(filter);
 
   if (follow) {
-    const tail = spawn("tail", ["-f", SELLER_LOG_PATH], {
-      stdio: active ? ["ignore", "pipe", "pipe"] : "inherit",
-    });
+    // Cross-platform file watching (works on Windows, macOS, Linux)
+    let lastSize = fs.existsSync(SELLER_LOG_PATH) ? fs.statSync(SELLER_LOG_PATH).size : 0;
 
-    if (active && tail.stdout) {
-      let buffer = "";
-      tail.stdout.on("data", (chunk: Buffer) => {
-        buffer += chunk.toString();
-        const lines = buffer.split("\n");
-        buffer = lines.pop()!;
+    const readNewContent = () => {
+      try {
+        const currentSize = fs.statSync(SELLER_LOG_PATH).size;
+        if (currentSize <= lastSize) return;
+        const fd = fs.openSync(SELLER_LOG_PATH, "r");
+        const buffer = Buffer.alloc(currentSize - lastSize);
+        fs.readSync(fd, buffer, 0, buffer.length, lastSize);
+        fs.closeSync(fd);
+        lastSize = currentSize;
+        const lines = buffer.toString("utf-8").split("\n");
         for (const line of lines) {
-          if (matchesFilter(line, filter)) {
+          if (line && (!active || matchesFilter(line, filter))) {
             process.stdout.write(line + "\n");
           }
         }
-      });
-    }
+      } catch {
+        // File may not exist yet or be temporarily locked
+      }
+    };
 
-    // Keep running until user hits Ctrl+C
+    const watcher = fs.watch(SELLER_LOG_PATH, () => readNewContent());
+
     await new Promise<void>((resolve) => {
-      tail.on("close", () => resolve());
       process.on("SIGINT", () => {
-        tail.kill();
+        watcher.close();
         resolve();
       });
     });

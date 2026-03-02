@@ -1,5 +1,7 @@
 // =============================================================================
 // Axios HTTP client for the ACP API.
+// Uses a request interceptor so the API key is read fresh on every request,
+// allowing agent switches without restarting the process.
 // =============================================================================
 
 import axios from "axios";
@@ -8,21 +10,27 @@ import { loadApiKey } from "./config.js";
 
 dotenv.config();
 
-// Ensure API key is loaded from config
 loadApiKey();
 
 const client = axios.create({
   baseURL: process.env.ACP_API_URL || "https://claw-api.virtuals.io",
-  headers: {
-    "x-api-key": process.env.LITE_AGENT_API_KEY,
-  },
+});
+
+client.interceptors.request.use((config) => {
+  const key = process.env.LITE_AGENT_API_KEY;
+  if (key) {
+    config.headers["x-api-key"] = key;
+  }
+  return config;
 });
 
 client.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      throw new Error(JSON.stringify(error.response.data));
+      const data = error.response.data;
+      const message = typeof data === "string" ? data : JSON.stringify(data);
+      throw new Error(message.slice(0, 2000));
     }
     throw error;
   }

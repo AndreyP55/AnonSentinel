@@ -58,8 +58,8 @@ function calcStats(agents: Agent[], totalAgents: number) {
   const now = Date.now();
   const MS_7D = 7 * 24 * 60 * 60 * 1000;
   const MS_30D = 30 * 24 * 60 * 60 * 1000;
+  const sampleSize = agents.length || 1; // prevent division by zero
 
-  // Activity: agents active in last 7 / 30 days
   const activeIn7d = agents.filter(
     (a) => a.lastActiveAt && now - new Date(a.lastActiveAt).getTime() < MS_7D
   ).length;
@@ -151,13 +151,13 @@ function calcStats(agents: Agent[], totalAgents: number) {
       totalAgents,
       sampleSize: agents.length,
       agentsWithOfferings,
-      agentsWithOfferingsPercent: +((agentsWithOfferings / agents.length) * 100).toFixed(1),
-      categorizedAgentsPercent: +((withCategory / agents.length) * 100).toFixed(1),
+      agentsWithOfferingsPercent: +((agentsWithOfferings / sampleSize) * 100).toFixed(1),
+      categorizedAgentsPercent: +((withCategory / sampleSize) * 100).toFixed(1),
     },
     activity: {
       activeIn7Days: activeIn7d,
       activeIn30Days: activeIn30d,
-      activeIn7DaysPercent: +((activeIn7d / agents.length) * 100).toFixed(1),
+      activeIn7DaysPercent: +((activeIn7d / sampleSize) * 100).toFixed(1),
       avgSuccessRate,
     },
     categories: topCategories,

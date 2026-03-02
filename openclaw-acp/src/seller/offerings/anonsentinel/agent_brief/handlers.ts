@@ -59,7 +59,6 @@ async function searchAgentViaSearchAPI(query: string): Promise<Agent | null> {
 }
 
 async function searchAgentViaFiltersAPI(query: string): Promise<Agent | null> {
-  const encoded = encodeURIComponent(query);
   const response = await axios.get(AGENTS_API, {
     params: { "filters[name][$containsi]": query, "pagination[pageSize]": "5" },
     timeout: 15000,

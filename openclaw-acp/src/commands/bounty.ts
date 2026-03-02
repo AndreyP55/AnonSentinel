@@ -795,7 +795,7 @@ export async function status(bountyId: string, flags?: { sync?: boolean }): Prom
       output.field("Category", data.category);
       output.field("Tags", data.tags);
       if (data.acpJobId) output.field("ACP Job ID", data.acpJobId);
-      if (data.claimedByWallet) output.field("Claimed By", data.claimedBy);
+      if (data.claimedBy) output.field("Claimed By", data.claimedBy);
       if (data.matchedAgent) output.field("Claimed By Wallet Address", data.matchedAgent);
       if (data.candidates) output.field("Candidates", data.candidates.length);
       if (data.sourceChannel) output.field("Source Channel", data.sourceChannel);

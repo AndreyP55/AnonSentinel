@@ -37,8 +37,7 @@ const OFFERINGS_BASE = path.resolve(__dirname, "..", "seller", "offerings");
 function getOfferingsRoot(): string {
   const agent = getActiveAgent();
   if (!agent) {
-    console.error("Error: No active agent. Run `acp setup` first.");
-    process.exit(1);
+    output.fatal("No active agent. Run `acp setup` first.");
   }
   return path.resolve(OFFERINGS_BASE, sanitizeAgentName(agent.name));
 }
@@ -161,44 +160,39 @@ function validateOfferingJson(filePath: string): ValidationResult {
   }
   if (json.jobFee === undefined || json.jobFee === null) {
     result.valid = false;
-    // Validate jobFee presence, type, and value based on jobFeeType
-    if (json.jobFee === undefined || json.jobFee === null) {
-      result.valid = false;
-      result.errors.push(
-        'offering.json: "jobFee" is required — set to a number (see "jobFeeType" docs)'
-      );
-    } else if (typeof json.jobFee !== "number") {
-      result.valid = false;
-      result.errors.push('offering.json: "jobFee" must be a number');
-    }
+    result.errors.push(
+      'offering.json: "jobFee" is required — set to a number (see "jobFeeType" docs)'
+    );
+  } else if (typeof json.jobFee !== "number") {
+    result.valid = false;
+    result.errors.push('offering.json: "jobFee" must be a number');
+  }
 
-    if (json.jobFeeType === undefined || json.jobFeeType === null) {
-      result.valid = false;
-      result.errors.push('offering.json: "jobFeeType" is required ("fixed" or "percentage")');
-    } else if (json.jobFeeType !== "fixed" && json.jobFeeType !== "percentage") {
-      result.valid = false;
-      result.errors.push('offering.json: "jobFeeType" must be either "fixed" or "percentage"');
-    }
+  if (json.jobFeeType === undefined || json.jobFeeType === null) {
+    result.valid = false;
+    result.errors.push('offering.json: "jobFeeType" is required ("fixed" or "percentage")');
+  } else if (json.jobFeeType !== "fixed" && json.jobFeeType !== "percentage") {
+    result.valid = false;
+    result.errors.push('offering.json: "jobFeeType" must be either "fixed" or "percentage"');
+  }
 
-    // Additional validation if both jobFee is a number and jobFeeType is set
-    if (typeof json.jobFee === "number" && json.jobFeeType) {
-      if (json.jobFeeType === "fixed") {
-        if (json.jobFee < 0) {
-          result.valid = false;
-          result.errors.push(
-            'offering.json: "jobFee" must be a non-negative number (fee in USDC per job) for fixed fee type'
-          );
-        }
-        if (json.jobFee === 0) {
-          result.warnings.push('offering.json: "jobFee" is 0; jobs will pay no fee to seller');
-        }
-      } else if (json.jobFeeType === "percentage") {
-        if (json.jobFee < 0.001 || json.jobFee > 0.99) {
-          result.valid = false;
-          result.errors.push(
-            'offering.json: "jobFee" must be >= 0.001 and <= 0.99 (value in decimals, eg. 50% = 0.5) for percentage fee type'
-          );
-        }
+  if (typeof json.jobFee === "number" && json.jobFeeType) {
+    if (json.jobFeeType === "fixed") {
+      if (json.jobFee < 0) {
+        result.valid = false;
+        result.errors.push(
+          'offering.json: "jobFee" must be a non-negative number (fee in USDC per job) for fixed fee type'
+        );
+      }
+      if (json.jobFee === 0) {
+        result.warnings.push('offering.json: "jobFee" is 0; jobs will pay no fee to seller');
+      }
+    } else if (json.jobFeeType === "percentage") {
+      if (json.jobFee < 0.001 || json.jobFee > 0.99) {
+        result.valid = false;
+        result.errors.push(
+          'offering.json: "jobFee" must be >= 0.001 and <= 0.99 (value in decimals, eg. 50% = 0.5) for percentage fee type'
+        );
       }
     }
   }
