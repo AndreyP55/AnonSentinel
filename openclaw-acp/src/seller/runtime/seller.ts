@@ -8,7 +8,12 @@
 // =============================================================================
 
 import dotenv from "dotenv";
-dotenv.config();
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __seller_dirname = path.dirname(fileURLToPath(import.meta.url));
+const envPath = path.resolve(__seller_dirname, "../../../.env");
+dotenv.config({ path: envPath });
 
 import { connectAcpSocket } from "./acpSocket.js";
 import { acceptOrRejectJob, requestPayment, deliverJob } from "./sellerApi.js";

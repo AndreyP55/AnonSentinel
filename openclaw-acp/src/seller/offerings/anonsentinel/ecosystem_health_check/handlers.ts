@@ -110,7 +110,12 @@ function codexToTokenPair(r: CodexPairResult, tokenAddress: string): TokenPair {
 
 async function fetchFromCodex(tokenAddress: string): Promise<TokenPair[] | null> {
   const apiKey = getCodexApiKey();
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.log("[health_check] CODEX_API_KEY not set — skipping Codex, using DEXScreener only");
+    return null;
+  }
+
+  console.log("[health_check] Querying Codex API for", tokenAddress);
 
   try {
     const res = await withRetry(async () => {
@@ -135,11 +140,19 @@ async function fetchFromCodex(tokenAddress: string): Promise<TokenPair[] | null>
     }, "codex filterPairs");
 
     const json = await res.json() as any;
+
+    if (json.errors) {
+      console.error("[health_check] Codex returned errors:", JSON.stringify(json.errors));
+      return null;
+    }
+
     const results: CodexPairResult[] = json?.data?.filterPairs?.results ?? [];
+    console.log(`[health_check] Codex returned ${results.length} pair(s)`);
     if (results.length === 0) return null;
 
     return results.map((r) => codexToTokenPair(r, tokenAddress));
-  } catch {
+  } catch (err) {
+    console.error("[health_check] Codex fetch failed:", err);
     return null;
   }
 }
