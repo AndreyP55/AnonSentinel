@@ -131,8 +131,8 @@ function codexMetaToTokenPair(
   const addr = tokenAddress.toLowerCase();
   const isToken0 = r.pair.token0.toLowerCase() === addr;
 
-  const baseInfo = r.backingToken ?? r.token;
-  const quoteInfo = r.backingToken ? r.token : r.backingToken;
+  const baseInfo = r.token;
+  const quoteInfo = r.backingToken;
 
   const base = baseInfo
     ? { address: baseInfo.address, name: baseInfo.name, symbol: baseInfo.symbol }
@@ -219,14 +219,20 @@ interface DexScreenerPair {
   pairCreatedAt: number;
 }
 
-function dexScreenerToTokenPair(p: DexScreenerPair): TokenPair {
+function dexScreenerToTokenPair(p: DexScreenerPair, tokenAddress: string): TokenPair {
+  const addr = tokenAddress.toLowerCase();
+  const isQuote = p.quoteToken.address.toLowerCase() === addr;
+  
+  const base = isQuote ? p.quoteToken : p.baseToken;
+  const quote = isQuote ? p.baseToken : p.quoteToken;
+  
   return {
     source: "dexscreener",
     chainId: p.chainId,
     dexId: p.dexId,
     pairAddress: p.pairAddress,
-    baseToken: p.baseToken,
-    quoteToken: p.quoteToken,
+    baseToken: base,
+    quoteToken: quote,
     priceUsd: p.priceUsd,
     txns: { h24: { buys: p.txns?.h24?.buys ?? 0, sells: p.txns?.h24?.sells ?? 0 } },
     volume: { h24: p.volume?.h24 ?? 0 },
@@ -259,7 +265,7 @@ async function fetchFromDexScreener(tokenAddress: string): Promise<TokenPair[] |
     const basePairs = data.pairs.filter((p) => p.chainId === "base");
     const candidates = basePairs.length > 0 ? basePairs : data.pairs;
 
-    return candidates.map(dexScreenerToTokenPair);
+    return candidates.map((p) => dexScreenerToTokenPair(p, tokenAddress));
   } catch {
     return null;
   }

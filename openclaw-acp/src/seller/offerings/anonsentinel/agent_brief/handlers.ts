@@ -172,7 +172,7 @@ async function fetchAgentById(agentId: number): Promise<Agent | null> {
         successRate: metrics.successRate ?? agent.successRate ?? null,
         uniqueBuyerCount: metrics.uniqueBuyerCount ?? agent.uniqueBuyerCount ?? null,
         minsFromLastOnlineTime: null,
-        isOnline: metrics.isOnline ?? false,
+        isOnline: metrics.isOnline ?? agent.isOnline ?? false,
       },
       jobs: agent.jobs ?? [],
       resources: agent.resources ?? [],
