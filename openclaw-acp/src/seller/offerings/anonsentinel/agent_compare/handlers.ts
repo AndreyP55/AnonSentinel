@@ -84,7 +84,7 @@ async function resolveAgent(query: string): Promise<AgentSnapshot | null> {
           successfulJobCount: md.successfulJobCount ?? null,
           successRate: md.successRate ?? null,
           uniqueBuyerCount: md.uniqueBuyerCount ?? null,
-          isOnline: md.isOnline ?? false,
+          isOnline: md.isOnline ?? null,
         };
       }
     } catch {
@@ -98,6 +98,12 @@ async function resolveAgent(query: string): Promise<AgentSnapshot | null> {
     ? `$${Math.min(...prices).toFixed(2)} – $${Math.max(...prices).toFixed(2)}`
     : "N/A";
 
+  const tokenInfo = agent.symbol 
+    ? `$${agent.symbol}` 
+    : agent.tokenAddress 
+      ? `${agent.tokenAddress.slice(0, 6)}...${agent.tokenAddress.slice(-4)}`
+      : null;
+
   return {
     name: agent.name,
     agentId: agent.id ?? null,
@@ -107,7 +113,7 @@ async function resolveAgent(query: string): Promise<AgentSnapshot | null> {
     uniqueBuyers: metrics.uniqueBuyerCount ?? agent.uniqueBuyerCount ?? null,
     offeringCount: jobs.length,
     priceRange,
-    token: agent.symbol ? `$${agent.symbol}` : null,
+    token: tokenInfo,
     walletAddress: agent.walletAddress ?? "",
   };
 }
