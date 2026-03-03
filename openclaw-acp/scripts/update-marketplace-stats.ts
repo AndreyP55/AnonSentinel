@@ -44,14 +44,22 @@ interface FetchResult {
 }
 
 async function fetchAgents(): Promise<FetchResult> {
-  const response = await axios.get(AGENTS_API, {
-    params: { "pagination[pageSize]": String(SAMPLE_SIZE), "pagination[page]": "1" },
-    timeout: 25000,
-    headers: HEADERS,
-  });
-  const agents = (response.data?.data ?? []) as Agent[];
-  const totalAgents: number = response.data?.meta?.pagination?.total ?? agents.length;
-  return { agents, totalAgents };
+  try {
+    const response = await axios.get(AGENTS_API, {
+      params: { "pagination[pageSize]": String(SAMPLE_SIZE), "pagination[page]": "1" },
+      timeout: 25000,
+      headers: HEADERS,
+    });
+    const agents = (response.data?.data ?? []) as Agent[];
+    const totalAgents: number = response.data?.meta?.pagination?.total ?? agents.length;
+    return { agents, totalAgents };
+  } catch (err: any) {
+    console.error("Failed to fetch agents from API:");
+    console.error("  URL:", AGENTS_API);
+    console.error("  Status:", err?.response?.status);
+    console.error("  Message:", err?.message);
+    throw err;
+  }
 }
 
 function calcStats(agents: Agent[], totalAgents: number) {
@@ -170,7 +178,8 @@ function calcStats(agents: Agent[], totalAgents: number) {
       offerings: [
         { name: "agent_brief", price: "$0.05", description: "Full profile for any agent" },
         { name: "ecosystem_health_check", price: "$0.10", description: "Token risk & health score" },
-        { name: "offerings_digest", price: "$0.15", description: "Curated marketplace search" },
+        { name: "offerings_digest", price: "$0.05", description: "Curated marketplace search" },
+        { name: "agent_compare", price: "$0.08", description: "Compare 2-5 agents side-by-side" },
       ],
     },
   };
