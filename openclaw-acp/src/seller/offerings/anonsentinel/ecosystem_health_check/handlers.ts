@@ -244,6 +244,7 @@ function dexScreenerToTokenPair(p: DexScreenerPair, tokenAddress: string): Token
 }
 
 async function fetchFromDexScreener(tokenAddress: string): Promise<TokenPair[] | null> {
+  console.log(`[health_check] Fetching from DEXScreener for ${tokenAddress}`);
   try {
     const response = await withRetry(async () => {
       const res = await fetch(`${DEXSCREENER_API}/${tokenAddress}`, {
@@ -257,16 +258,24 @@ async function fetchFromDexScreener(tokenAddress: string): Promise<TokenPair[] |
       return res;
     }, "dexscreener token");
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.log(`[health_check] DEXScreener returned status ${response.status}`);
+      return null;
+    }
 
     const data = await response.json() as { pairs?: DexScreenerPair[] };
-    if (!data.pairs || data.pairs.length === 0) return null;
+    if (!data.pairs || data.pairs.length === 0) {
+      console.log(`[health_check] DEXScreener returned no pairs for ${tokenAddress}`);
+      return null;
+    }
 
     const basePairs = data.pairs.filter((p) => p.chainId === "base");
     const candidates = basePairs.length > 0 ? basePairs : data.pairs;
 
+    console.log(`[health_check] DEXScreener found ${candidates.length} pairs (${basePairs.length} on Base)`);
     return candidates.map((p) => dexScreenerToTokenPair(p, tokenAddress));
-  } catch {
+  } catch (err) {
+    console.error(`[health_check] DEXScreener fetch failed:`, err);
     return null;
   }
 }
@@ -281,17 +290,23 @@ function scorePair(p: TokenPair): number {
 }
 
 async function fetchTokenData(tokenAddress: string): Promise<TokenPair | null> {
+  console.log(`[health_check] Starting parallel fetch for ${tokenAddress}`);
   const [codexPairs, dexPairs] = await Promise.all([
     fetchFromCodex(tokenAddress),
     fetchFromDexScreener(tokenAddress),
   ]);
+
+  console.log(`[health_check] Codex returned ${codexPairs?.length ?? 0} pairs, DEXScreener returned ${dexPairs?.length ?? 0} pairs`);
 
   const allPairs: TokenPair[] = [
     ...(codexPairs ?? []),
     ...(dexPairs ?? []),
   ];
 
-  if (allPairs.length === 0) return null;
+  if (allPairs.length === 0) {
+    console.log(`[health_check] No pairs found for ${tokenAddress} from any source`);
+    return null;
+  }
 
   const best = allPairs.sort((a, b) => scorePair(b) - scorePair(a))[0];
   console.log(`[health_check] Best pair: ${best.baseToken.symbol}/${best.quoteToken.symbol} on ${best.dexId} (${best.source}) liq=${best.liquidity.usd} vol=${best.volume.h24}`);
@@ -407,10 +422,15 @@ export async function executeJob(request: any): Promise<ExecuteJobResult> {
     return { deliverable: JSON.stringify({ error: "tokenAddress is required", human_summary: "Error: No token address provided." }) };
   }
 
+  console.log(`[health_check] Job request for token ${tokenAddress}`);
+
   const cached = getCached("ecosystem_health_check", { tokenAddress });
   if (cached) {
+    console.log(`[health_check] Returning cached result for ${tokenAddress}`);
     return { deliverable: cached };
   }
+
+  console.log(`[health_check] No cache, fetching fresh data for ${tokenAddress}`);
 
   try {
     const pair = await fetchTokenData(tokenAddress);
