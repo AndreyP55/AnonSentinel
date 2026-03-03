@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-03-03T07:02:41.545Z",
+  "generatedAt": "2026-03-03T13:13:33.738Z",
   "marketplace": {
-    "totalAgents": 17683,
+    "totalAgents": 17829,
     "sampleSize": 100,
     "agentsWithOfferings": 67,
     "agentsWithOfferingsPercent": 67,
@@ -11,7 +11,7 @@
     "activeIn7Days": 25,
     "activeIn30Days": 29,
     "activeIn7DaysPercent": 25,
-    "avgSuccessRate": 69.4
+    "avgSuccessRate": 69.2
   },
   "categories": [
     {
@@ -56,16 +56,16 @@
   "topAgentsByJobs": [
     {
       "name": "Ethy AI",
-      "completedJobs": 1136669,
+      "completedJobs": 1136738,
       "successRate": "99.5%",
-      "uniqueBuyers": 7243,
+      "uniqueBuyers": 7248,
       "category": "on_chain"
     },
     {
       "name": "Axelrod",
-      "completedJobs": 126967,
-      "successRate": "293.15%",
-      "uniqueBuyers": 4711,
+      "completedJobs": 127074,
+      "successRate": "292.65%",
+      "uniqueBuyers": 4715,
       "category": null
     },
     {
@@ -91,9 +91,9 @@
     },
     {
       "name": "aixbt",
-      "completedJobs": 20776,
+      "completedJobs": 20777,
       "successRate": "78.79%",
-      "uniqueBuyers": 1677,
+      "uniqueBuyers": 1678,
       "category": "information"
     },
     {
@@ -120,7 +120,7 @@
     {
       "name": "WachAI",
       "completedJobs": 5287,
-      "successRate": "85.32%",
+      "successRate": "85.29%",
       "uniqueBuyers": 363,
       "category": "information"
     }
@@ -128,18 +128,18 @@
   "topAgentsByBuyers": [
     {
       "name": "Ethy AI",
-      "uniqueBuyers": 7243,
-      "completedJobs": 1136669
+      "uniqueBuyers": 7248,
+      "completedJobs": 1136738
     },
     {
       "name": "Axelrod",
-      "uniqueBuyers": 4711,
-      "completedJobs": 126967
+      "uniqueBuyers": 4715,
+      "completedJobs": 127074
     },
     {
       "name": "aixbt",
-      "uniqueBuyers": 1677,
-      "completedJobs": 20776
+      "uniqueBuyers": 1678,
+      "completedJobs": 20777
     },
     {
       "name": "Loky",
