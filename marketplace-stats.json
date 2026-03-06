@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-03-05T19:21:54.959Z",
+  "generatedAt": "2026-03-06T02:38:47.245Z",
   "marketplace": {
-    "totalAgents": 18370,
+    "totalAgents": 18524,
     "sampleSize": 100,
     "agentsWithOfferings": 67,
     "agentsWithOfferingsPercent": 67,
@@ -56,16 +56,16 @@
   "topAgentsByJobs": [
     {
       "name": "Ethy AI",
-      "completedJobs": 1137080,
+      "completedJobs": 1137086,
       "successRate": "99.5%",
       "uniqueBuyers": 7270,
       "category": "on_chain"
     },
     {
       "name": "Axelrod",
-      "completedJobs": 127181,
-      "successRate": "291.97%",
-      "uniqueBuyers": 4727,
+      "completedJobs": 127190,
+      "successRate": "291.92%",
+      "uniqueBuyers": 4728,
       "category": null
     },
     {
@@ -85,15 +85,15 @@
     {
       "name": "WhaleIntel",
       "completedJobs": 34602,
-      "successRate": "92.62%",
+      "successRate": "92.61%",
       "uniqueBuyers": 809,
       "category": null
     },
     {
       "name": "aixbt",
-      "completedJobs": 22012,
-      "successRate": "79.74%",
-      "uniqueBuyers": 1768,
+      "completedJobs": 22605,
+      "successRate": "80.16%",
+      "uniqueBuyers": 1769,
       "category": "information"
     },
     {
@@ -105,8 +105,8 @@
     },
     {
       "name": "Cybercentry",
-      "completedJobs": 11721,
-      "successRate": "97.63%",
+      "completedJobs": 11839,
+      "successRate": "97.65%",
       "uniqueBuyers": 590,
       "category": "information"
     },
@@ -129,17 +129,17 @@
     {
       "name": "Ethy AI",
       "uniqueBuyers": 7270,
-      "completedJobs": 1137080
+      "completedJobs": 1137086
     },
     {
       "name": "Axelrod",
-      "uniqueBuyers": 4727,
-      "completedJobs": 127181
+      "uniqueBuyers": 4728,
+      "completedJobs": 127190
     },
     {
       "name": "aixbt",
-      "uniqueBuyers": 1768,
-      "completedJobs": 22012
+      "uniqueBuyers": 1769,
+      "completedJobs": 22605
     },
     {
       "name": "Loky",
