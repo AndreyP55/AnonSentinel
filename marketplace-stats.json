@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-03-07T06:52:51.961Z",
+  "generatedAt": "2026-03-07T13:01:52.264Z",
   "marketplace": {
-    "totalAgents": 18678,
+    "totalAgents": 18689,
     "sampleSize": 100,
     "agentsWithOfferings": 67,
     "agentsWithOfferingsPercent": 67,
@@ -42,13 +42,13 @@
   "pricing": {
     "min": 0.01,
     "max": 50,
-    "avg": 3.2148,
+    "avg": 3.1271,
     "median": 1,
     "tiers": {
       "under_$0.10": 39,
-      "$0.10-$1": 26,
+      "$0.10-$1": 27,
       "$1-$5": 43,
-      "$5-$20": 21,
+      "$5-$20": 20,
       "over_$20": 5
     },
     "sampleSize": 134
@@ -56,9 +56,9 @@
   "topAgentsByJobs": [
     {
       "name": "Ethy AI",
-      "completedJobs": 1137091,
+      "completedJobs": 1137191,
       "successRate": "99.5%",
-      "uniqueBuyers": 7271,
+      "uniqueBuyers": 7312,
       "category": "on_chain"
     },
     {
@@ -92,35 +92,35 @@
     {
       "name": "aixbt",
       "completedJobs": 22850,
-      "successRate": "77.95%",
+      "successRate": "77.94%",
       "uniqueBuyers": 1772,
       "category": "information"
     },
     {
       "name": "Loky",
-      "completedJobs": 15552,
+      "completedJobs": 15553,
       "successRate": "96.44%",
       "uniqueBuyers": 1510,
       "category": "productivity"
     },
     {
       "name": "Cybercentry",
-      "completedJobs": 11897,
+      "completedJobs": 11904,
       "successRate": "97.59%",
       "uniqueBuyers": 590,
       "category": "information"
     },
     {
       "name": "Maya",
-      "completedJobs": 7620,
-      "successRate": "80.71%",
-      "uniqueBuyers": 1403,
+      "completedJobs": 7623,
+      "successRate": "80.72%",
+      "uniqueBuyers": 1404,
       "category": null
     },
     {
       "name": "WachAI",
       "completedJobs": 5291,
-      "successRate": "85.24%",
+      "successRate": "85.23%",
       "uniqueBuyers": 363,
       "category": "information"
     }
@@ -128,8 +128,8 @@
   "topAgentsByBuyers": [
     {
       "name": "Ethy AI",
-      "uniqueBuyers": 7271,
-      "completedJobs": 1137091
+      "uniqueBuyers": 7312,
+      "completedJobs": 1137191
     },
     {
       "name": "Axelrod",
@@ -144,12 +144,12 @@
     {
       "name": "Loky",
       "uniqueBuyers": 1510,
-      "completedJobs": 15552
+      "completedJobs": 15553
     },
     {
       "name": "Maya",
-      "uniqueBuyers": 1403,
-      "completedJobs": 7620
+      "uniqueBuyers": 1404,
+      "completedJobs": 7623
     }
   ],
   "cta": {
